@@ -1,0 +1,96 @@
+-- Serviços do Roblox
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Gui Elementos
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local TextBox = Instance.new("TextBox")
+local Button = Instance.new("TextButton")
+local CloseButton = Instance.new("TextButton")
+local Dragging = false
+local PlayerToFollow
+local FollowActive = false
+
+-- Configurações da ScreenGui
+ScreenGui.Name = "FollowGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Configurações do Frame
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+Frame.BackgroundColor3 = Color3.new(1, 1, 1)
+Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true
+
+-- Configurações da TextBox
+TextBox.Size = UDim2.new(1, -20, 0, 30)
+TextBox.Position = UDim2.new(0, 10, 0, 10)
+TextBox.PlaceholderText = "Digite o nome do jogador"
+TextBox.Parent = Frame
+
+-- Configurações do Button
+Button.Size = UDim2.new(1, -20, 0, 30)
+Button.Position = UDim2.new(0, 10, 0, 50)
+Button.Text = "Seguir"
+Button.Parent = Frame
+
+-- Configurações do CloseButton
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -40, 0, 10)
+CloseButton.Text = "X"
+CloseButton.BackgroundColor3 = Color3.new(1, 0, 0)
+CloseButton.TextColor3 = Color3.new(1, 1, 1)
+CloseButton.Parent = Frame
+
+-- Função para encontrar jogador
+local function findPlayer(name)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Name:lower():find(name:lower()) or player.DisplayName:lower():find(name:lower()) then
+            return player
+        end
+    end
+    return nil
+end
+
+-- Função de loop para seguir o jogador
+local function followPlayer(player)
+    local localPlayer = Players.LocalPlayer
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local rootPart = player.Character.HumanoidRootPart
+        local localCharacter = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+        local localRootPart = localCharacter:FindFirstChild("HumanoidRootPart")
+        
+        if localRootPart then
+            localRootPart.CFrame = rootPart.CFrame * CFrame.new(0, 5, 0) -- Teleporte acima do jogador
+        end
+    end
+end
+
+-- Evento de clique no botão
+Button.MouseButton1Click:Connect(function()
+    if FollowActive then
+        FollowActive = false
+        Button.Text = "Seguir"
+    else
+        PlayerToFollow = findPlayer(TextBox.Text)
+        if PlayerToFollow then
+            FollowActive = true
+            Button.Text = "Parar de seguir"
+        end
+    end
+end)
+
+-- Evento de clique no CloseButton
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy() -- Remove a ScreenGui do PlayerGui
+end)
+
+-- Loop para teleporte
+RunService.RenderStepped:Connect(function()
+    if FollowActive and PlayerToFollow then
+        followPlayer(PlayerToFollow)
+    end
+end)
